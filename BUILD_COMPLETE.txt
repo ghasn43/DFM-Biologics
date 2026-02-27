@@ -1,0 +1,386 @@
+✅ PROJECT BUILD COMPLETE: DFM Biologics v1.0.0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧬 SAFE Biopharma Construct Builder & Manufacturability Gate
+A complete in-silico tool for computational design planning and risk assessment.
+
+
+📦 PROJECT STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+dfm_biologics/
+├── README.md                    Project overview & API docs
+├── SETUP.md                     Development environment guide
+├── EXAMPLES.md                  Usage examples & API calls
+├── CONTRIBUTING.md              Contribution guidelines
+├── LICENSE                      MIT + responsible use agreement
+├── pyproject.toml              Package configuration
+├── .env.example                Environment template
+├── .gitignore                  Git exclusions
+│
+├── backend/                    FastAPI backend (REST API)
+│   ├── main.py               Entry point - starts FastAPI server
+│   ├── start.py              Helper script to start backend
+│   ├── api/
+│   │   ├── routes.py         Endpoints: /score, /blueprint, /health
+│   │   └── __init__.py
+│   ├── core/
+│   │   ├── models.py         Pydantic schemas (CandidateSpec, GateResult)
+│   │   ├── scoring.py        Core scoring logic & engine
+│   │   ├── checks_sequence.py GC, homopolymers, repeats, motifs
+│   │   ├── checks_construct.py Modality → blueprint mapping
+│   │   ├── report.py         Report generation (MD, JSON)
+│   │   ├── utils.py          Helper functions (FASTA, calculations)
+│   │   └── __init__.py
+│   ├── data/
+│   │   ├── codon_tables.json Codon usage reference
+│   │   └── vendor_rules.yaml Vendor constraints (placeholder)
+│   └── __init__.py
+│
+├── app_ui/                     Streamlit frontend
+│   ├── streamlit_app.py       Main entry point & home page
+│   ├── start_frontend.py      Helper script to start frontend
+│   └── pages/
+│       ├── 1_Candidate_Input.py     Input form + scoring trigger
+│       ├── 2_Construct_Architecture.py Blueprint viewer
+│       └── 3_Manufacturability_Report.py Results & exports
+│
+├── tests/                      Unit tests
+│   ├── test_scoring.py         Scoring logic tests
+│   ├── test_checks.py          Sequence/construct check tests
+│   └── __init__.py
+│
+├── verify_installation.py      Dependency verification script
+├── start_frontend.py          Frontend startup script
+
+
+⚡ QUICK START (5 MINUTES)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. INSTALL
+   ```bash
+   cd dfm_biologics
+   python -m venv venv
+   venv\Scripts\activate                # Windows
+   # or: source venv/bin/activate       # macOS/Linux
+   pip install -e .
+   ```
+
+2. VERIFY
+   ```bash
+   python verify_installation.py
+   ```
+
+3. RUN BACKEND (Terminal 1)
+   ```bash
+   cd backend
+   python main.py
+   # Backend runs on http://localhost:8000
+   # API Docs: http://localhost:8000/docs
+   ```
+
+4. RUN FRONTEND (Terminal 2)
+   ```bash
+   cd .. (back to project root)
+   python start_frontend.py
+   # or: streamlit run app_ui/streamlit_app.py
+   # Frontend runs on http://localhost:8501
+   ```
+
+5. OPEN BROWSER
+   http://localhost:8501
+
+
+🚀 CORE FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Sequence Analysis
+   - GC content (overall + sliding windows)
+   - Homopolymer detection
+   - K-mer repeat identification
+   - Palindrome/hairpin proxy detection
+   - Forbidden motif search
+   - Restriction site flagging (read-only)
+
+✅ Construct Blueprints
+   - IgG-like bispecific (2×2 chains)
+   - VHH bispecific (single-chain)
+   - Fab-scFv hybrid
+   - Fc-fusion protein
+   - Abstract domain mapping (no wet-lab steps)
+
+✅ Manufacturability Scoring
+   - Sequence Synthesis (0–100)
+   - Assembly Risk (0–100)
+   - Developability (0–100)
+   - Expression Risk (0–100)
+   - Overall Score (weighted composite)
+   - Full explainability via flags with locations
+
+✅ Developability Heuristics
+   - N-glycosylation risk (NXST motif)
+   - Deamidation hotspots (NG, NS, NT)
+   - Oxidation risk (methionines)
+   - Proteolytic cleavage motifs (RR, RK, KR)
+
+✅ Export Capabilities
+   - Normalized FASTA
+   - JSON summary
+   - Markdown report (with formatting)
+   - All downloadable from UI
+
+
+🔌 API ENDPOINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Base URL: http://localhost:8000
+
+GET /health
+  → Check backend status
+  Response: {"status": "ok", "version": "1.0.0"}
+
+POST /score
+  → Score a construct for manufacturability
+  Input: CandidateSpec + ManufacturingConstraints
+  Output: GateResult (scores, flags, suggestions, artifacts)
+
+POST /blueprint
+  → Generate abstract construct blueprint
+  Input: CandidateSpec
+  Output: ConstructBlueprint (chains, domains, warnings)
+
+Visit http://localhost:8000/docs for interactive documentation
+
+
+📊 INPUT SCHEMAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CandidateSpec:
+  - project_name: identifier
+  - modality: IgG_like_bispecific | VHH_bispecific | Fab_scFv | Fc_fusion
+  - targets: list of target antigens (e.g., ["HER2", "HER3"])
+  - expression_system: mammalian | yeast | ecoli | cell_free
+  - sequence_type: protein | dna_cds
+  - sequence: FASTA or plain string
+  - notes: optional design notes
+
+ManufacturingConstraints:
+  - max_fragment_length: 50–5000 (default 500)
+  - gc_min, gc_max: 0.0–1.0 (default 0.3–0.7)
+  - max_homopolymer: 3–15 (default 6)
+  - forbidden_motifs: list of strings
+  - restriction_sites_to_avoid: list of enzyme names
+  - vendor_profile: generic | twist_like | idt_like
+
+
+📈 OUTPUT SCHEMAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GateResult:
+  - overall_score: 0–100
+  - sub_scores: {sequence_synth, assembly_risk, developability, expression_risk}
+  - flags: [{severity, category, message, location}]
+  - suggestions: [high-level design recommendations]
+  - artifacts: {normalized_fasta, json_summary, markdown_report}
+
+ConstructBlueprint:
+  - chains: list of chain identifiers
+  - domains: [{chain, name, start, end}]
+  - warnings: [design-level concerns]
+
+
+🧪 TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Run all tests:
+  pytest tests/ -v
+
+Run with coverage:
+  pytest tests/ --cov=backend --cov-report=html
+
+Test files included:
+  - test_scoring.py: Scoring logic, determinism, range checks
+  - test_checks.py: Sequence/construct checks, parsing, validation
+
+
+🎯 SUPPORTED MODALITIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+| Modality | Chains | Example | Use Case |
+|----------|--------|---------|----------|
+| IgG_like_bispecific | HC1, LC1, HC2, LC2 | 2×2 array | Dual-targeting antibody |
+| VHH_bispecific | ScVHH | [VHH1–Linker–VHH2] | Single-chain, compact |
+| Fab_scFv | Fab_HC, Fab_LC, scFv | Hybrid | Fab + single-chain |
+| Fc_fusion | Fusion | [Binder–Fc] | Fusion protein, effector func. |
+
+
+🌍 EXPRESSION SYSTEMS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+mammalian  - CHO, HEK293, NSO (glycosylation, complex post-translational mod)
+yeast      - P. pastoris, S. cerevisiae (heterologous, limited glycosylation)
+ecoli      - E. coli (high yield, some strains for periplasmic expression)
+cell_free  - In vitro systems (rapid, low yield, flexible)
+
+
+⚠️ SAFETY COMMITMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ DOES:
+  ✓ Analyze sequence properties computationally
+  ✓ Flag manufacturability risks
+  ✓ Generate abstract construct architectures
+  ✓ Suggest high-level design improvements
+  ✓ Support early-stage design iteration
+  ✓ Help with regulatory documentation
+
+❌ DOES NOT:
+  ✗ Provide step-by-step wet-lab protocols
+  ✗ Replace expert molecular biologist review
+  ✗ Guarantee experimental success
+  ✗ Enable harmful bioengineering
+  ✗ Bypass biosafety oversight
+
+⚖️ REQUIREMENTS:
+  1. All outputs must be reviewed by qualified scientists
+  2. Compliance with institutional biosafety committees
+  3. Adherence to export controls and regulations
+  4. Ethical use in line with DURC policies
+  5. Experimental validation before manufacturing
+
+
+📚 DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+README.md            → Overview, API reference, curl examples
+SETUP.md             → Environment setup, development workflow
+EXAMPLES.md          → Practical examples, use cases, API calls
+CONTRIBUTING.md      → Contributing guidelines, code style
+LICENSE              → MIT + responsible use agreement
+verify_installation.py → Dependency checker
+backend/start.py     → Backend startup helper
+start_frontend.py    → Frontend startup helper
+
+
+🛠️ DEVELOPMENT COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Install:          pip install -e .
+Install + dev:    pip install -e ".[dev]"
+Verify:           python verify_installation.py
+Backend:          cd backend && python main.py
+Frontend:         streamlit run app_ui/streamlit_app.py
+Tests:            pytest tests/ -v
+Coverage:         pytest tests/ --cov=backend --cov-report=html
+Format:           black backend/ app_ui/ tests/
+Lint:             flake8 backend/ app_ui/ tests/
+Type check:       mypy backend/
+
+
+🌟 KEY MODULES AT A GLANCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+backend/core/models.py
+  → Pydantic schemas for all inputs/outputs
+  → Enums for modality, expression system, severity levels
+
+backend/core/scoring.py
+  → ManufacturabilityScoringEngine class
+  → Deterministic scoring logic with full explainability
+  → Combines 4 sub-scores: synthesis, assembly, developability, expression
+
+backend/core/checks_sequence.py
+  → SequenceChecker class
+  → FASTA parsing, GC analysis, motif detection
+  → Homopolymer, repeat, palindrome checks
+
+backend/core/checks_construct.py
+  → ConstructChecker class
+  → Modality-driven blueprint generation
+  → Abstract domain and chain mapping
+
+app_ui/pages/1_Candidate_Input.py
+  → Form for sequence, modality, targets, constraints
+  → Buttons to trigger scoring & blueprint generation
+
+app_ui/pages/2_Construct_Architecture.py
+  → Display generated blueprint
+  → Show chains, domains, warnings
+  → Export options (JSON, Markdown)
+
+app_ui/pages/3_Manufacturability_Report.py
+  → Show overall score & sub-scores
+  → Filterable flags table with severity/category
+  → Suggestions and export artifacts
+
+
+📋 NEXT ENHANCEMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Phase 2 (Medium Priority):
+  □ Full vendor profiles (Twist, IDT, Genewiz)
+  □ Secondary structure prediction (RNAfold integration with safety gates)
+  □ PDF export for reports
+  □ Glycosylation mapping + NXST analysis
+  □ Codon optimization per expression system
+  □ Design versioning & comparison
+
+Phase 3 (Long-term):
+  □ ML-based developability scoring (with explainability)
+  □ Sequence alignment (BLAST-like, read-only)
+  □ Docker deployment
+  □ Multi-user project management
+  □ Audit trails for regulatory compliance
+  □ Integration with ATUM, Agilent, ELM design tools
+
+
+💡 TIPS FOR USERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Start Simple
+   → Try a small bispecific (50–100 aa) first
+   → Review flags and suggestions
+   → Understand the scoring before complex designs
+
+2. Iterate
+   → Score → Review flags → Modify sequence → Score again
+   → Track iterations (save reports with timestamps)
+
+3. Export & Share
+   → Download Markdown reports for lab discussions
+   → Export JSON for programmatic analysis
+   → Share FASTA with synthesis vendors
+
+4. Validate Everything
+   → This tool is computational, not experimental
+   → Always verify with expert review
+   → Perform experimental validation
+
+5. Report Issues
+   → Found a bug? Check CONTRIBUTING.md
+   → Suggestions? Open an issue with examples
+
+
+📞 SUPPORT & COMPLIANCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For questions:
+  1. Check README.md and SETUP.md
+  2. Review EXAMPLES.md for use cases
+  3. Consult your biotech team lead
+  4. Contact institutional biosafety officer (for compliance)
+
+For bugs:
+  1. Reproduce issue with minimal example
+  2. Run verify_installation.py to check dependencies
+  3. Check test files for expected behavior
+  4. Open GitHub issue with full details
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ BUILD COMPLETE - You're ready to go!
+
+Next: See "QUICK START" section above 🚀
+
+🧬 Happy designing with DFM Biologics!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

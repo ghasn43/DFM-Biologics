@@ -57,8 +57,8 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     
-    host = os.getenv("BACKEND_HOST", "127.0.0.1")
-    port = int(os.getenv("BACKEND_PORT", "8000"))
+    host = os.getenv("BACKEND_HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", os.getenv("BACKEND_PORT", "8000")))
     log_level = os.getenv("LOG_LEVEL", "info").lower()
     
     print(f"\n🧬 DFM Biologics Backend")

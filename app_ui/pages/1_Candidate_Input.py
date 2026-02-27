@@ -3,6 +3,7 @@ Streamlit Page 1: Candidate Input
 Input sequence, modality, targets, and constraints
 """
 
+import os
 import streamlit as st
 import requests
 import json
@@ -13,8 +14,8 @@ st.set_page_config(page_title="Candidate Input", layout="wide")
 st.markdown("# 📝 Candidate Input")
 st.markdown("Define your construct and manufacturability constraints")
 
-# Backend configuration
-BACKEND_URL = "http://localhost:8000"
+# Backend configuration (use environment variable or default to localhost)
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
 
 # Check backend connectivity
 try:
@@ -25,9 +26,10 @@ except:
 
 if not backend_ok:
     st.error(
-        "❌ Backend not reachable. Please ensure FastAPI is running on http://localhost:8000\n\n"
-        "To start the backend:\n"
-        "```bash\ncd backend\npython main.py\n```"
+        f"❌ Backend not reachable at {BACKEND_URL}\n\n"
+        "**Local Development:** Ensure FastAPI is running\n"
+        "```bash\ncd backend\npython main.py\n```\n"
+        "**Deployed:** Check BACKEND_URL environment variable is set correctly"
     )
     st.stop()
 

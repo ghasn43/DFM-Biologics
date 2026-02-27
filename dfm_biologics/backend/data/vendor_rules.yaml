@@ -1,0 +1,59 @@
+# Placeholder vendor rules and constraints
+# In a production system, this would contain detailed vendor-specific rules
+
+vendors:
+  generic:
+    description: "Generic synthesis constraints (conservative default)"
+    max_fragment_length: 500
+    gc_min: 0.30
+    gc_max: 0.70
+    max_homopolymer: 6
+    min_fragment_length: 50
+    
+  twist_like:
+    description: "Placeholder for Twist-like vendor profile"
+    max_fragment_length: 750
+    gc_min: 0.25
+    gc_max: 0.75
+    max_homopolymer: 7
+    min_fragment_length: 50
+    
+  idt_like:
+    description: "Placeholder for IDT-like vendor profile"
+    max_fragment_length: 400
+    gc_min: 0.30
+    gc_max: 0.70
+    max_homopolymer: 5
+    min_fragment_length: 50
+
+# Common codon-optimization targets
+expression_systems:
+  mammalian:
+    codon_table: "mammalian"
+    max_homopolymer: 6
+    gc_window_size: 100
+    
+  yeast:
+    codon_table: "yeast"
+    max_homopolymer: 6
+    gc_window_size: 100
+    
+  ecoli:
+    codon_table: "ecoli"
+    max_homopolymer: 5
+    gc_window_size: 100
+    
+  cell_free:
+    codon_table: "mammalian"
+    max_homopolymer: 6
+    gc_window_size: 100
+
+# Restriction enzymes to avoid (placeholder)
+restriction_enzymes:
+  common:
+    - EcoRI
+    - BamHI
+    - HindIII
+    - XbaI
+    - SmaI
+    - SalI

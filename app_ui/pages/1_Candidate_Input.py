@@ -3,9 +3,7 @@ Streamlit Page 1: Candidate Input
 Input sequence, modality, targets, and constraints
 """
 
-import os
 import streamlit as st
-import requests
 import json
 from typing import Optional
 
@@ -13,25 +11,6 @@ st.set_page_config(page_title="Candidate Input", layout="wide")
 
 st.markdown("# 📝 Candidate Input")
 st.markdown("Define your construct and manufacturability constraints")
-
-# Backend configuration (use environment variable or default to localhost)
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
-
-# Check backend connectivity
-try:
-    response = requests.get(f"{BACKEND_URL}/health", timeout=2)
-    backend_ok = response.status_code == 200
-except:
-    backend_ok = False
-
-if not backend_ok:
-    st.error(
-        f"❌ Backend not reachable at {BACKEND_URL}\n\n"
-        "**Local Development:** Ensure FastAPI is running\n"
-        "```bash\ncd backend\npython main.py\n```\n"
-        "**Deployed:** Check BACKEND_URL environment variable is set correctly"
-    )
-    st.stop()
 
 # Session state initialization
 if "candidate_data" not in st.session_state:
@@ -209,18 +188,19 @@ with col_btn1:
             st.error("Please enter a sequence")
         else:
             try:
-                response = requests.post(
-                    f"{BACKEND_URL}/blueprint",
-                    json=st.session_state.candidate_data,
-                    timeout=10
+                from backend.core.checks_construct import ConstructChecker
+                
+                blueprint = ConstructChecker.generate_blueprint(
+                    project_name=st.session_state.candidate_data["project_name"],
+                    modality=st.session_state.candidate_data["modality"],
+                    sequence=st.session_state.candidate_data["sequence"],
+                    expression_system=st.session_state.candidate_data["expression_system"]
                 )
-                if response.status_code == 200:
-                    st.session_state.blueprint_result = response.json()
-                    st.success("Blueprint generated! Go to **Construct Architecture** to view it.")
-                else:
-                    st.error(f"Error: {response.text}")
+                # Convert Pydantic model to dict for session storage
+                st.session_state.blueprint_result = blueprint.model_dump()
+                st.success("Blueprint generated! Go to **Construct Architecture** to view it.")
             except Exception as e:
-                st.error(f"API error: {e}")
+                st.error(f"Error generating blueprint: {e}")
 
 with col_btn2:
     if st.button("⚙️ Score Construct", use_container_width=True):
@@ -230,22 +210,22 @@ with col_btn2:
             st.error("Please enter a sequence")
         else:
             try:
-                payload = {
-                    "candidate_spec": st.session_state.candidate_data,
-                    "manufacturing_constraints": st.session_state.constraints_data
-                }
-                response = requests.post(
-                    f"{BACKEND_URL}/score",
-                    json=payload,
-                    timeout=10
-                )
-                if response.status_code == 200:
-                    st.session_state.score_result = response.json()
-                    st.success("Scoring complete! Go to **Manufacturability Report** to view results.")
-                else:
-                    st.error(f"Error: {response.text}")
+                from backend.core.scoring import ManufacturabilityScoringEngine
+                from backend.core.models import CandidateSpec, ManufacturingConstraints
+                
+                # Create Pydantic models from session state
+                candidate = CandidateSpec(**st.session_state.candidate_data)
+                constraints = ManufacturingConstraints(**st.session_state.constraints_data)
+                
+                # Run scoring
+                engine = ManufacturabilityScoringEngine()
+                result = engine.score(candidate, constraints)
+                
+                # Convert to dict for session storage
+                st.session_state.score_result = result.model_dump()
+                st.success("Scoring complete! Go to **Manufacturability Report** to view results.")
             except Exception as e:
-                st.error(f"API error: {e}")
+                st.error(f"Error during scoring: {e}")
 
 with col_btn3:
     if st.button("📋 Clear Form", use_container_width=True):
